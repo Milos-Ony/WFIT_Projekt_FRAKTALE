@@ -1,0 +1,15 @@
+W 109-115 linijkach naszego kodu znajduje się fragment:
+
+# GUI CREATION
+
+GUI = Tk()
+GUI.title("Fractal!")
+photo = ImageTk.PhotoImage(Image.open("Phoenix.png"))
+GUI.iconphoto(False, photo)
+GUI.geometry("1330x523")
+
+który może wyrzucać błąd, ponieważ nie może znaleźć pliku Phoenix.png...
+Wystarczy wykomentować poniższe linijki :) (jest to fragment ustawiajacy miniaturkę gui)
+
+photo = ImageTk.PhotoImage(Image.open("Phoenix.png"))
+GUI.iconphoto(False, photo)
