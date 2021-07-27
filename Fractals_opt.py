@@ -1,0 +1,446 @@
+import numpy as np
+import colorsys
+from tkinter import *
+from PIL import ImageTk, Image
+import math
+
+
+# Funkcja zwracająca kolor do kolorowania fraktali w zależności od iteracji i
+
+def rgb_conv(i):
+    # color = 255 * np.array(colorsys.hsv_to_rgb(i / 255.0, 1, 0.5)) #hsv_ściągnięty
+    # color = 255 * np.array(colorsys.hls_to_rgb(i * 0.8 / 255, i * 1.5 / 255, i / 255)) #???
+    color = 255 * np.array(colorsys.hls_to_rgb(255 / (i * 1), i * 1.5 / 255, i * 1.2 / 255))  #tęcza
+    # color = 255 * np.array(colorsys.hls_to_rgb( (i + 160)/255, (i + 150) / 350, i/(4*i**(1/1.5)))) #róż
+    # color = 255 * np.array(colorsys.hls_to_rgb(40/(55+20*math.sin(i/130)), 0.5 + 0.25*math.sin(i/50), 0.5 - 0.25*math.cos(i/50))) #math
+    return tuple(color.astype(int))
+
+# Funkcje generujące poszczególne fraktale
+
+
+iterations = 750
+
+
+def mandelbrot(x, y):
+    # Mandelbrot
+    c = complex(x, y)
+    z = 0
+
+    for i in range(1, iterations):
+        if abs(z) > 2:
+            return rgb_conv(i)
+        # Normal
+        z = z ** 2 + c
+    return 0, 0, 0
+
+
+def julia(x, y, c):
+    # Julia
+    # cj = complex(-0.4, 0.6)
+    z = complex(x, y)
+
+    for i in range(1, iterations):
+        if abs(z) > 2:
+            return rgb_conv(i)
+        # Normal
+        z = z ** 2 + c
+    return 0, 0, 0
+
+
+def phoenix(x, y, c, p):
+    # Phoenix deafult
+    # c = 0.5667
+    # p = -0.5
+
+    # Phoenix x
+    # c = 0.269
+    # p = complex(0, 0.01)
+
+    z = complex(y, x)
+    z0 = 0
+
+    for i in range(1, iterations):
+        if abs(z) > 2:
+            return rgb_conv(i)
+        #Phoenix
+        zs = z
+        z = z ** 2 + c + p * z0
+        z0 = zs
+    return 0, 0, 0
+
+
+def ship(x, y):
+    #The Burning Ship Fractal
+    c = complex(x, y)
+    z = 0
+
+    for i in range(1, iterations):
+        if abs(z) > 2:
+            return rgb_conv(i)
+        # The Burning Ship Fractal
+        z = (abs(z.real) + abs(z.imag)*complex(0, 1))**2 - c
+    return 0, 0, 0
+
+
+########################################################################################################################
+# Koniec części kodu "tej z fraktalami", teraz zaczyna się część kodu z gui i z rysowaniem obrazków.
+
+
+WIDTH = 750
+res_ratio = 1 / (WIDTH/1000)
+zoom = 2
+
+range_x = np.linspace(-2.5, 1.5, int(WIDTH))
+range_y = np.linspace(-1, 1, int(WIDTH / 2))
+img = Image.new("RGB", (WIDTH, int(WIDTH / 2)))
+pixels = img.load()
+
+back_img = []
+back_range = []
+back_zoom = []
+
+click = 0
+
+string_text = ""
+
+
+########################################################################################################################
+
+# GUI CREATION
+
+GUI = Tk()
+GUI.title("Fractal!")
+photo = ImageTk.PhotoImage(Image.open("Phoenix.png"))
+GUI.iconphoto(False, photo)
+GUI.geometry("1330x523")
+
+# USED FUNCTIONS
+
+
+# def change_res(om):
+#     global WIDTH, res_ratio
+#     global img, pixels
+#     WIDTH = om
+#     res_ratio = 1 / (WIDTH / 1000)
+#
+#     img = Image.new("RGB", (WIDTH, int(WIDTH / 2)))
+#     pixels = img.load()
+
+
+def change_iter(oom):
+    global iterations
+    iterations = oom
+
+
+def zoom_change(ooom):
+    global zoom
+    zoom = ooom
+
+
+def generate(glrx, gurx, glry, gury):
+    global range_x, range_y
+
+    img = Image.new("RGB", (resol.get(), int(resol.get() / 2)))
+    pixels = img.load()
+
+    range_x = np.linspace(glrx, gurx, resol.get())
+    range_y = np.linspace(glry, gury, int(resol.get()/2))
+
+    if clicked.get() == "Mandelbrot":
+        for x in range(img.size[0]):
+            for y in range(img.size[1]):
+                pixels[x, y] = mandelbrot(range_x[x], range_y[-y])
+
+    elif clicked.get() == "Julia":
+        try:
+            zmienna_c = complex(ce.get())
+        except:
+            zmienna_c = complex(-0.4, 0.6)
+
+        for x in range(img.size[0]):
+            for y in range(img.size[1]):
+                pixels[x, y] = julia(range_x[x], range_y[-y], zmienna_c)
+
+    elif clicked.get() == "Phoenix":
+        try:
+            zmienna_c = complex(ce.get())
+            zmienna_p = complex(pe.get())
+        except:
+            zmienna_c = complex(0.5667)
+            zmienna_p = complex(-0.5)
+
+        for x in range(img.size[0]):
+            for y in range(img.size[1]):
+                pixels[x, y] = phoenix(range_x[x], range_y[-y], zmienna_c, zmienna_p)
+
+    elif clicked.get() == "Burning Ship":
+        for x in range(img.size[0]):
+            for y in range(img.size[1]):
+                pixels[x, y] = ship(range_x[x], range_y[-y])
+
+    else:
+        print("Error")
+
+    if WIDTH != 1000:
+        m_img = img.resize((1000, 500))
+    else:
+        m_img = img
+
+    my_img = ImageTk.PhotoImage(m_img)
+    picture = Label(image=my_img)
+    picture.place(x=10, y=10)
+    picture.image = my_img
+
+    back_img.append(m_img)
+    back_range.append([glrx, gurx, glry, gury])
+
+    global string_text
+
+    sum_zoom = 1
+    for i in back_zoom:
+        sum_zoom = sum_zoom * i
+    string_text = "Current zoom is: " + str(sum_zoom)
+    text.set(string_text)
+
+
+def reset():
+    global click
+
+    click = 0
+    back_zoom.clear()
+
+    if clicked.get() == "Mandelbrot":
+        generate(-2.5, 1.5, -1, 1)
+
+    elif clicked.get() == "Julia":
+        generate(-3, 3, -1.5, 1.5)
+
+    elif clicked.get() == "Phoenix":
+        generate(-2, 2, -1, 1)
+
+    elif clicked.get() == "Burning Ship":
+        generate(-2.5, 3.5, -1, 2)
+
+    else:
+        print("Error")
+
+x_preview = []
+y_preview = []
+
+def coordinates_check():
+    if len(x_preview) == 0 and len(y_preview) == 0:
+        return False
+
+def motion(event):
+    global x, y, click, res_ratio
+    x = event.x
+    y = event.y
+
+    click = click + 1
+
+    res_ratio = 1 / (resol.get() / 1000)
+
+    if len(x_preview) != 0 and len(y_preview) != 0:
+        if 0 <= x <= 1000 and 0 <= y <= 500 and x == x_preview[-1] and y == y_preview[-1]:
+
+            x_preview.clear()
+            y_preview.clear()
+
+            back_zoom.append(r.get())
+
+            click = 0
+
+            print("\n ------------------------------------- \n")
+            print("Current zoom: ", zoom)
+            print("iterations: ", iterations)
+            print("resolution: ", resol.get(), "x", int(resol.get() / 2))
+            print("zooming...")
+            print("\n")
+
+            xc = (x / res_ratio) / resol.get()
+            yc = (y / res_ratio) / int(resol.get() / 2)
+
+            min_x = range_x[0]
+            max_x = range_x[-1]
+
+            rx = max_x - min_x
+            lrx = min_x + xc * rx - ((rx / 2) / zoom)
+            urx = min_x + xc * rx + ((rx / 2) / zoom)
+
+            min_y = range_y[0]
+            max_y = range_y[-1]
+            ry = max_y - min_y
+            lry = max_y - yc * ry - ((ry / 2) / zoom)
+            ury = max_y - yc * ry + ((ry / 2) / zoom)
+
+            print("x values: ", lrx, " to ", urx)
+            print("y values: ", lry, " to ", ury)
+
+            print("\n")
+
+            generate(lrx, urx, lry, ury)
+
+
+
+            print("zoomed!!!")
+        else:
+            x_preview.append(x)
+            y_preview.append(y)
+    else:
+        x_preview.append(x)
+        y_preview.append(y)
+
+
+def regenerate():
+    lrx = range_x[0]
+    urx = range_x[-1]
+
+    lry = range_y[0]
+    ury = range_y[-1]
+
+    generate(lrx, urx, lry, ury)
+
+    back_zoom.append(1)
+
+
+def back():
+    global go_back
+
+    if len(back_img) > 1:
+        my_img = ImageTk.PhotoImage(back_img[-2])
+        picture = Label(image=my_img)
+        picture.place(x=10, y=10)
+        picture.image = my_img
+
+        global range_x, range_y
+
+        print("x",back_range[-2][0], back_range[-2][1])
+        print("y", back_range[-2][2], back_range[-2][3])
+
+        range_x = np.linspace(back_range[-2][0], back_range[-2][1], resol.get())
+        range_y = np.linspace(back_range[-2][2], back_range[-2][3], int(resol.get()/2))
+
+        back_img.pop(-1)
+        back_range.pop(-1)
+        if len(back_zoom) != 0:
+            back_zoom.pop(-1)
+
+        global string_text
+
+        sum_zoom = 1
+        for i in back_zoom:
+            sum_zoom = sum_zoom * i
+        string_text = "Current zoom is: " + str(sum_zoom)
+        text.set(string_text)
+
+    else:
+        print("za mało elementów listy")
+
+
+def save_img():
+    if len(back_img) > 0:
+        back_img[-1].save(se.get()+".png")
+    else:
+        print("Brak pliku do zapisania")
+
+########################################################################################################################
+# Elements:
+
+# LABELS
+
+label_ch = Label(GUI, text = "Choose your fractal: ")
+label_ch.place(x = 1020, y = 15)
+
+label_c = Label(GUI, text = "Julia's constant:")
+label_c.place(x = 1020, y = 150)
+
+label_p = Label(GUI, text = "Phoenix's constant:")
+label_p.place(x = 1020, y = 180)
+
+rozdz = Label(GUI, text = "Resolution:")
+rozdz.place(x = 1050, y = 50)
+
+iterat = Label(GUI, text = "Iterations:")
+iterat.place(x = 1200, y = 50)
+
+label_zoom = Label(GUI, text = "Zoom:")
+label_zoom.place(x = 1020, y = 220)
+
+text = StringVar()
+
+label_sumazuma = Label(GUI, textvariable = text)
+label_sumazuma.place(x=1020, y=340)
+
+# INPUT FIELDS
+
+ce = Entry(GUI, width = 30)
+ce.place(x = 1140, y = 150)
+
+pe = Entry(GUI, width = 30)
+pe.place(x = 1140, y = 180)
+
+se = Entry(GUI, width = 20)
+se.place(x = 1050, y = 485)
+
+# DROP MENUS
+
+clicked = StringVar()
+clicked.set("Mandelbrot")
+
+drop = OptionMenu(GUI, clicked, "Mandelbrot", "Julia", "Phoenix", "Burning Ship")
+drop.place(x = 1140, y = 10)
+
+# CHECK BOXES
+
+# chec_value = IntVar()
+#
+# check = Checkbutton(GUI, text = "Zoom Enable/Disable", variable = chec_value)
+# check.place(x = 1020, y = 220)
+
+# RADIO BUTTONS
+
+resol = IntVar()
+resol.set("750")
+
+Radiobutton(GUI, text = "1000x500", variable = resol, value = 1000).place(x = 1050, y = 70) # command = lambda: change_res(resol.get())
+Radiobutton(GUI, text = "750x375", variable = resol, value = 750).place(x = 1050, y = 90)
+Radiobutton(GUI, text = "500x250", variable = resol, value = 500).place(x = 1050, y = 110)
+
+iters = IntVar()
+iters.set("500")
+
+Radiobutton(GUI, text = "~1000", variable = iters, value = 1000, command = lambda: change_iter(iters.get())).place(x = 1200, y = 70)
+Radiobutton(GUI, text = "~500", variable = iters, value = 500, command = lambda: change_iter(iters.get())).place(x = 1200, y = 90)
+Radiobutton(GUI, text = "~250", variable = iters, value = 250, command = lambda: change_iter(iters.get())).place(x = 1200, y = 110)
+
+r = IntVar()
+r.set("2")
+
+Radiobutton(GUI, text = "2x", variable = r, value = 2, command = lambda: zoom_change(r.get())).place(x = 1060, y = 220)
+Radiobutton(GUI, text = "5x", variable = r, value = 5, command = lambda: zoom_change(r.get())).place(x = 1060, y = 240)
+Radiobutton(GUI, text = "10x", variable = r, value = 10, command = lambda: zoom_change(r.get())).place(x = 1060, y = 260)
+Radiobutton(GUI, text = "20x", variable = r, value = 20, command = lambda: zoom_change(r.get())).place(x = 1060, y = 280)
+Radiobutton(GUI, text = "50x", variable = r, value = 50, command = lambda: zoom_change(r.get())).place(x = 1060, y = 300)
+Radiobutton(GUI, text = "100x", variable = r, value = 100, command = lambda: zoom_change(r.get())).place(x = 1060, y = 320)
+
+# BUTTONS
+
+Button_regenerate = Button(GUI, text = "Regenerate", padx = 80, pady = 10, command = regenerate)
+Button_regenerate.place(x = 1050, y = 360)
+
+Button_back = Button(GUI, text = "Back", padx = 35 ,pady = 10, command = back)
+Button_back.place(x = 1050, y = 410)
+
+Button_reset = Button(GUI, text = "Reset", padx = 35, pady = 10, command = reset)
+Button_reset.place(x = 1170, y = 410)
+
+Button_save = Button(GUI, text = "Save", padx = 30, pady = 1, command = save_img)
+Button_save.place(x = 1180, y = 480)
+
+# CLICK DETECTION
+
+GUI.bind('<Button>', motion)
+
+# GUI END
+
+GUI.mainloop()
